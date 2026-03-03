@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Portfolio TCG — Florian BILLON</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  
+  font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  color:#000000;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.header{
+  display:flex;
+  gap:24px;
+  align-items:center;
+  margin-bottom:28px;
+}
+.brand-card{
+  width:140px; height:200px;
+  perspective:1200px;
+}
+.card-inner{
+  width:100%; height:100%;
+  position:relative;
+  transform-style:preserve-3d;
+  transition: transform 1s cubic-bezier(.2,.9,.3,1);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+  border-radius:12px;
+  overflow:hidden;
+  border: 2px solid rgba(255,255,255,0.06);
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+}
+.card-front, .card-back{
+  position:absolute; inset:0;
+  backface-visibility:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:12px;
+}
+.card-front{
+  transform: rotateY(0deg);
+  background: linear-gradient(135deg, rgba(50,30,60,0.5), rgba(20,10,35,0.45));
+  background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0 1px, transparent 1px 6px);
+  color:#000000;
+  font-weight:700;
+  text-align:center;
+}
+.card-back{
+  transform: rotateY(180deg);
+  background: linear-gradient(180deg, rgb(0, 0, 0), rgb(0, 0, 0));
+  color:#000000;
+  text-align:center;
+}
+.card-opened .card-inner{ transform: rotateY(180deg); }
+.container{
+  max-width:1100px;
+  margin:0 auto;
+}
+.header-info{
+  flex:1;
+}
+.name{font-size:28px;font-weight:800;letter-spacing:0.5px}
+.contact{opacity:0.85;margin-top:6px;font-size:13px}
+.section{margin:0px 0;padding:13px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;border:1px solid rgba(255,255,255,0.04)}
+.section h2{font-size:20px;margin-bottom:12px}
+#sectionBas {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.5);
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.page-overlay > .container > * {
+  position: relative;
+  z-index: 1;
+}
+
+.skills-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:18px;}
+.tcg-card{
+  width:100%; height:220px; border-radius:12px; perspective:1000px; position:relative;
+}
+.tcg-card .inner{
+  position:relative; width:100%; height:100%;
+  transform-style:preserve-3d;
+  transition: transform 0.7s cubic-bezier(.2,.9,.3,1);
+  border-radius:12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+}
+.tcg-card .face{
+  position:absolute; inset:0; border-radius:12px; backface-visibility:hidden; overflow:hidden;
+}
+.tcg-card .back-face{
+  background: linear-gradient(135deg, rgba(20,10,40,0.6), rgba(40,10,60,0.55));
+  display:flex;align-items:center;justify-content:center; font-weight:800; font-size:18px;
+  transform: rotateY(0deg);
+  background-image: url("background.png");
+  background-size:cover; mix-blend-mode:overlay;
+}
+.tcg-card .front-face{
+  transform: rotateY(180deg);
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.2));
+  color:#000000; padding:14px; display:flex; flex-direction:column; gap:6px;
+}
+.tcg-card:hover .inner{ transform: rotateY(180deg); }
+.dice-row{display:flex;gap:14px;flex-wrap:wrap}
+.dice{
+  width:72px;height:72px;border-radius:12px;background:linear-gradient(180deg,#fff,#ddd);
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#07070a;
+  box-shadow: inset 0 -6px 12px rgba(0,0,0,0.06), 0 8px 26px rgba(0,0,0,0.45);
+  border:2px solid rgba(0,0,0,0.08);
+}
+.dice small{display:block;font-size:11px;opacity:0.8;margin-top:6px}
+.projects-list{display:flex;flex-direction:column;gap:8px}
+.cta{display:flex;gap:12px;align-items:center;margin-top:12px}
+.btn{padding:10px 14px;border-radius:10px;background:linear-gradient(180deg,#2b2b6b,#14142b);color:#fff;text-decoration:none;font-weight:700;box-shadow:0 6px 18px rgba(10,10,30,0.6)}
+@media (max-width:720px){ .header{flex-direction:column;align-items:flex-start} .brand-card{width:120px;height:170px} .tcg-card{height:180px} }
+</style>
+</head>
+<body>
+  <div class="page-overlay">
+    <div class="container">
+      <div class="header">
+        <div class="brand-card" id="brandCard">
+          <div class="card-inner">
+            <div class="card-front face">
+              <div class="card-front face">
+              <div style="text-align:center; padding:0; width:100%; height:100%;">
+                <img src="profil.jpg" alt="Profil" style="width:100%; height:100%; object-fit:cover; border-radius:12px;">
+              </div>
+            </div>
+
+            </div>
+            <div class="card-back face" style="background:linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.02));">
+              <div style="text-align:center;">
+                <div style="font-size:12px;opacity:0.8">Portfolio</div>
+                <div style="font-size:18px;font-weight:900;margin-top:6px">Florian BILLON</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="header-info">
+          <div class="name">Florian BILLON</div>
+          <div class="contact">06 38 41 50 49 · florian.billon@epitech.eu · 91 rue Garibaldi, 94100 Saint-Maur-des-Fossés, France</div>
+          <div style="margin-top:10px;opacity:0.92;">Rigoureux, curieux et ouvert d&#x27;esprit. Dynamique, organisé et engagé au service du collectif. Cherche alternance en cybersécurité de Janvier 2026 à Juillet 2029. Bénéficie du statut RQTH.</div>
+          <div class="cta">
+            <a class="btn" href="#competences">Compétences</a>
+            <a class="btn" href="#experiences">Expériences</a>
+            <a class="btn" href="#contact">Contact</a>
+          </div>
+        </div>
+      </div>
+
+      <section id="competences" class="section">
+        <h2>Compétences</h2>
+        <div class="skills-grid" id="skillsGrid">
+
+          <div class="tcg-card" title="Python">
+            <div class="inner">
+              <div class="face back-face">Python</div>
+              <div class="face front-face">
+                <div style="font-weight:900;font-size:16px">Python</div>
+                <div style="font-size:13px;opacity:0.9;margin-top:6px">Scripts, analyse de données, prototypage.</div>
+                <div style="margin-top:auto;font-size:11px;opacity:0.7"> </div>
+              </div>
+            </div>
+          </div>
+    
+          <div class="tcg-card" title="HTML &amp; CSS">
+            <div class="inner">
+              <div class="face back-face">HTML &amp; CSS</div>
+              <div class="face front-face">
+                <div style="font-weight:900;font-size:16px">HTML &amp; CSS</div>
+                <div style="font-size:13px;opacity:0.9;margin-top:6px">Création d&#x27;interfaces web et prototypes interactifs.</div>
+                <div style="margin-top:auto;font-size:11px;opacity:0.7"> </div>
+              </div>
+            </div>
+          </div>
+    
+          <div class="tcg-card" title="Java">
+            <div class="inner">
+              <div class="face back-face">Java</div>
+              <div class="face front-face">
+                <div style="font-weight:900;font-size:16px">Java</div>
+                <div style="font-size:13px;opacity:0.9;margin-top:6px">Projets d&#x27;aventure et logique applicative.</div>
+                <div style="margin-top:auto;font-size:11px;opacity:0.7"> </div>
+              </div>
+            </div>
+          </div>
+    
+          <div class="tcg-card" title="VHDL">
+            <div class="inner">
+              <div class="face back-face">VHDL</div>
+              <div class="face front-face">
+                <div style="font-weight:900;font-size:16px">VHDL</div>
+                <div style="font-size:13px;opacity:0.9;margin-top:6px">Programmation matériel, projets électroniques.</div>
+                <div style="margin-top:auto;font-size:11px;opacity:0.7"> </div>
+              </div>
+            </div>
+          </div>
+    
+          <div class="tcg-card" title="Assembleur">
+            <div class="inner">
+              <div class="face back-face">Assembleur</div>
+              <div class="face front-face">
+                <div style="font-weight:900;font-size:16px">Assembleur</div>
+                <div style="font-size:13px;opacity:0.9;margin-top:6px">Contrôle bas niveau, robotique.</div>
+                <div style="margin-top:auto;font-size:11px;opacity:0.7"> </div>
+              </div>
+            </div>
+          </div>
+    
+          <div class="tcg-card" title="Bureautique">
+            <div class="inner">
+              <div class="face back-face">Bureautique</div>
+              <div class="face front-face">
+                <div style="font-weight:900;font-size:16px">Bureautique</div>
+                <div style="font-size:13px;opacity:0.9;margin-top:6px">Excel, PowerPoint, Word.</div>
+                <div style="margin-top:auto;font-size:11px;opacity:0.7"> </div>
+              </div>
+            </div>
+          </div>
+    
+        </div>
+      </section>
+
+      <section id="experiences" class="section">
+        <h2>Expériences</h2>
+        <div class="dice-row">
+
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+            <div class="dice">
+              <div style="text-align:center;">
+                <div style="font-size:20px">juillet 2024</div>
+                <small>stage</small>
+              </div>
+            </div>
+            <div style="max-width:220px;text-align:center;font-weight:700">Service de recherche en biotechnologies — ESIEE Paris</div>
+            <div style="max-width:300px;text-align:center;opacity:0.9;font-size:13px">Prises de mesures en salle blanche (WaveForms). Développement Python + MatLab pour analyser données expérimentales.</div>
+          </div>
+    
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+            <div class="dice">
+              <div style="text-align:center;">
+                <div style="font-size:20px">février 2020</div>
+                <small>stage</small>
+              </div>
+            </div>
+            <div style="max-width:220px;text-align:center;font-weight:700">Manufacture d’Orgues — Mondrevile</div>
+            <div style="max-width:300px;text-align:center;opacity:0.9;font-size:13px">Accompagnement d&#x27;un salarié, aide à l&#x27;accordage, rénovation et réparation d&#x27;orgues.</div>
+          </div>
+    
+        </div>
+      </section>
+
+      <section id="formations" class="section">
+        <h2>Formations</h2>
+        <div class="projects-list">
+<div><strong> Pré-MSC (M0) Epitech</strong> — <em>septembre 2025</em><div style='opacity:0.9;margin-top:6px'></div><div></div><strong>Prépa intégrée (ESIEE PARIS)</strong> — septembre 2023 - juillet 2025<div style='opacity:0.9;margin-top:6px'></div></div><div><strong>Baccalauréat Mention Bien — Lycée Marcelin Berthelot</strong> — <em>2023</em><div style='opacity:0.9;margin-top:6px'>Spécialités Maths, Physique-Chimie, Numérique et science de l’informatique</div></div>
+        </div>
+      </section>
+
+      <section id="projets" class="section">
+        <h2>Projets</h2>
+        <ul style="margin-left:18px">
+<li style='margin-bottom:6px'>Site web sur les jeux de stratégie &amp; association “ecolion+”</li><li style='margin-bottom:6px'>Jeu d’aventure style “livre dont vous êtes le héros” en Java</li><li style='margin-bottom:6px'>Feu tricolore (soudure + VHDL)</li><li style='margin-bottom:6px'>Robot labyrinthe (assembleur)</li><li style='margin-bottom:6px'>FencerStats — application de profilage joueurs d’escrime</li><li style='margin-bottom:6px'>RootMe — challenges (détails sur LinkedIn)</li>
+        </ul>
+      </section>
+
+      <section id="autres" class="section">
+        <h2>Langues & Centres d'intérêt</h2>
+        <div style="display:flex;gap:18px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:220px;">
+            <h3 style="font-size:14px;">Langues</h3>
+            <ul style="margin-left:18px">
+<li style='margin-bottom:6px'>Français — Langue maternelle</li><li style='margin-bottom:6px'>Anglais — Intermédiaire supérieur (B2 ≈ 71% IELTS)</li><li style='margin-bottom:6px'>Espagnol — Intermédiaire (B1)</li>
+            </ul>
+          </div>
+          <div style="flex:1;min-width:220px;">
+            <h3 style="font-size:14px;">Centres d'intérêt</h3>
+            <ul style="margin-left:18px">
+<li style='margin-bottom:6px'>Musique au Conservatoire (orgue, tuba, solfège)</li><li style='margin-bottom:6px'>Jeux de société, jeux de cartes, jeux de rôle</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="contact" class="section">
+        <h2>Contact & Escape Game CV</h2>
+        <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;">
+          <div style="flex:1;min-width:260px;">
+            <div style="font-weight:800">Florian BILLON</div>
+            <div style="opacity:0.9;margin-top:6px">06 38 41 50 49 · florian.billon@epitech.eu · 91 rue Garibaldi, 94100 Saint-Maur-des-Fossés, France</div>
+            <div style="margin-top:20px">Statut: <strong>RQTH</strong></div>
+          </div>
+          </div>
+          <div style="min-width:220px;">
+            <br>
+            <a class="btn" href="escape_game_cv_florian_billon_interactive_web_page_avec_score.html" target="_blank">→ Lancer l'Escape Game CV</a>
+          </div>
+        </div>
+      </section>
+
+      <section id="sectionBas" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:0;"></section>
+    </div>
+  </div>
+<script>
+window.addEventListener('load', function() {
+  const images = [
+    'image1.jpg','image2.jpg','image3.jpg','image4.jpg','image5.jpg',
+    'image6.jpg','image7.jpg','image8.jpg','image9.jpg','image10.jpg',
+    'image11.jpg','image12.jpg','image13.jpg','image14.jpg','image15.jpg', 'image16.jpg',
+  ];
+
+  function getRandomImage(exclude){
+    const filtered = images.filter(img => img !== exclude);
+    return filtered[Math.floor(Math.random() * filtered.length)];
+  }
+
+  const sectionBas = document.getElementById('sectionBas');
+  const formations = document.getElementById('formations');
+  const rect = formations.getBoundingClientRect();
+  const scrollTop = window.scrollY || window.pageYOffset;
+  sectionBas.style.top = (rect.top + scrollTop) + 'px';
+  sectionBas.style.height = (document.body.scrollHeight - (rect.top + scrollTop)) + 'px';
+
+  let bodyImage = getRandomImage();
+  let sectionImage = getRandomImage(bodyImage);
+
+  document.body.style.background = `
+    linear-gradient(rgba(255,255,255,0.25), rgba(255,255,255,0.25)),
+    url(${bodyImage}) no-repeat center center
+  `;
+  document.body.style.backgroundSize = 'cover';
+
+  sectionBas.style.background = `
+    linear-gradient(rgba(255,255,255,0.25), rgba(255,255,255,0.25)),
+    url(${sectionImage}) no-repeat center center
+  `;
+  sectionBas.style.backgroundSize = 'cover';
+
+  setInterval(() => {
+    bodyImage = getRandomImage(sectionImage);
+    sectionImage = getRandomImage(bodyImage);
+    document.body.style.background = `
+      linear-gradient(rgba(255,255,255,0.25), rgba(255,255,255,0.25)),
+      url(${bodyImage}) no-repeat center center
+    `;
+    document.body.style.backgroundSize = 'cover';
+    sectionBas.style.background = `
+      linear-gradient(rgba(255,255,255,0.25), rgba(255,255,255,0.25)),
+      url(${sectionImage}) no-repeat center center
+    `;
+    sectionBas.style.backgroundSize = 'cover';
+  }, 20000);
+});
+</script>

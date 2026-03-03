@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Escape Game - Bureau de Florian Billon</title>
+  <style>
+    :root {
+      --bg:#ffffff;
+      --panel:#f5f5f5;
+      --accent:#0077cc;
+      --muted:#555555;
+      --glass:rgba(0,0,0,0.03);
+    }
+    * { box-sizing:border-box; font-family:Inter,Segoe UI,Roboto,'Helvetica Neue',Arial; }
+    body { margin:0; background:#ffffff; color:#000000; min-height:100vh; }
+    .game { display:grid; grid-template-columns:360px 1fr; gap:18px; padding:18px; height:100vh; }
+    .sidebar { background:var(--panel); border-radius:12px; padding:14px; overflow:auto; }
+    h1 { font-size:18px; margin:0 0 8px 0 }
+    .panel { background:var(--glass); border-radius:10px; padding:10px; margin-bottom:12px; }
+    .room { position:relative; border-radius:12px; overflow:hidden; background:#eee; }
+    .scene { height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; }
+    .semi-transparente { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:1; z-index:0; }
+    .desk { width:92%; height:240px; background:#ddd; border-radius:8px; box-shadow:0 12px 40px rgba(0,0,0,0.1); position:relative; padding:14px; z-index:1; }
+    .monitor { position:absolute; right:18px; top:14px; width:260px; height:160px; background:#fafafa; border-radius:8px; padding:12px; display:flex; flex-direction:column; justify-content:center; align-items:center; border:1px solid #ccc; z-index:1; }
+    .monitor .text { font-size:14px; color:var(--muted); text-align:center }
+    .locker { position:absolute; left:16px; top:18px; width:140px; height:170px; background:#f9f9f9; border:1px solid #ccc; border-radius:8px; padding:12px; z-index:1; }
+    .drawer { position:absolute; left:16px; bottom:14px; width:260px; height:72px; background:#f9f9f9; border:1px solid #ccc; border-radius:8px; padding:10px; z-index:1; }
+    button, .btn { background:#fff; border:1px solid #ccc; padding:8px 10px; border-radius:8px; color:var(--accent); cursor:pointer; }
+    .log { font-size:13px; color:var(--muted); height:170px; overflow:auto; padding:8px; border-radius:6px; background:#fafafa; border:1px solid #ddd; }
+    .inventory { display:flex; flex-wrap:wrap; gap:8px; min-height:80px; border-radius:8px; padding:8px; background:#f9f9f9; border:1px dashed #ccc; }
+    .item { width:56px; height:56px; border-radius:8px; background:#fff; display:flex; align-items:center; justify-content:center; cursor:grab; border:1px solid #ccc; }
+    .item img { width:90%; height:90%; object-fit:contain; border-radius:6px; }
+    .dropzone { border:2px dashed #ccc; border-radius:10px; min-height:80px; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:13px; padding:8px; background:#fff; }
+    .reconstruct { min-height:120px; padding:8px; background:#fafafa; border-radius:8px; border:1px solid #ddd; }
+    .section-card { background:#fff; padding:8px; border-radius:8px; margin-bottom:8px; border-left:4px solid var(--accent); }
+    .score-panel { background:#fff; padding:8px; border-radius:8px; border:1px solid #ddd; margin-top:8px; }
+    @keyframes popIn { 0%{transform:scale(.85);opacity:0} 60%{transform:scale(1.05);opacity:1} 100%{transform:scale(1)} }
+    .reveal { animation:popIn .45s cubic-bezier(.2,.9,.3,1) }
+    .objects { position:absolute; inset:100; z-index:2; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:10px; pointer-events:none; }
+    .objects .piece { pointer-events:auto; background:#e6e6e6; color:#000; font-size:12px; width:56px; height:56px; border-radius:8px; display:flex; align-items:center; justify-content:center; border:1px solid #bbb; cursor:pointer; user-select:none; }
+    footer { position:fixed; left:50%; transform:translateX(-50%); bottom:50px; color:var(--muted); font-size:19px; }
+    @media (max-width:900px){ .game{grid-template-columns:1fr;grid-auto-rows:min-content} }
+  </style>
+</head>
+<body>
+  <div class="game">
+
+    <div class="sidebar">
+      <h1>Escape Game — Bureau (Florian Billon)</h1>
+
+      <div class="panel">
+        <strong>Objectif</strong>
+        <div style="margin-top:6px;color:var(--muted)" >
+          Collecte les objets dans la pièce et dépose-les sur la zone d'action pour révéler les sections du CV. Utilise l'inventaire par glisser-déposer.
+        </div>
+      </div>
+
+      <div class="panel">
+        <strong>Inventaire</strong>
+        <div class="inventory" id="inventory"></div>
+      </div>
+
+      <div class="panel">
+        <strong>Zone d'action</strong>
+        <div style="margin-top:8px" class="dropzone" id="dropzone">Dépose un objet ici pour l'examiner</div>
+      </div>
+
+      <div class="panel">
+        <strong>Journal</strong>
+        <div class="log" id="log">Tu entres dans le bureau…</div>
+      </div>
+
+      <div class="panel">
+        <strong>CV reconstitué</strong>
+        <div id="reconstructList" class="reconstruct"></div>
+      </div>
+
+      <div class="panel">
+        <strong>Score</strong>
+        <div class="score-panel" id="scorePanel">
+          <div id="scoreDisplay">Aucun score enregistré</div>
+          <div style="margin-top:8px">
+            <button id="showLeaderboard" class="btn">Voir le classement</button>
+          </div>
+          <div id="leaderboard" style="margin-top:8px; display:none;"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="room">
+      <div class="scene">
+        <img src="img/room.png" class="semi-transparente" alt="Room">
+
+        <div class="objects">
+          <div class="piece" id="p1">QR-code</div>
+          <div class="piece" id="p2"></div>
+          <div class="piece" id="p3">File</div>
+        </div>
+
+        <div class="desk" id="desk">
+          <div class="monitor" id="monitor">
+            <div class="text" id="monitorText">Écran verrouillé — clique pour tenter de déverrouiller.</div>
+            <div style="margin-top:8px"><button class="btn" id="tryMonitor">Tenter</button></div>
+          </div>
+          <div class="locker" id="locker">
+            <div style="font-weight:600;margin-bottom:6px">Armoire</div>
+            <div style="font-size:12px;color:var(--muted)">Serrure numérique — code à 3 chiffres</div>
+            <div style="margin-top:8px;display:flex;gap:6px">
+              <input id="lockerCode" maxlength="3" style="width:80px;padding:6px;border-radius:6px;border:1px solid #ccc;background:#fff;color:#000" placeholder="---">
+              <button class="btn" id="openLocker">OK</button>
+            </div>
+          </div>
+          <div class="drawer" id="drawer">
+            <div style="font-weight:600;margin-bottom:6px">Tiroir</div>
+            <div style="font-size:12px;color:var(--muted)">Une partition est partiellement visible.</div>
+            <div style="margin-top:6px"><button class="btn" id="openDrawer">Inspecter</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer style="color: rgb(255, 0, 0);">Astuce : récupère un objet, puis fais-le glisser dans la zone d'action. Les sections apparaissent avec une petite animation :)</footer>
+
+  <script>
+    const sections = {
+      'Profil': "Étudiant en 3ème année (M0) à l'EPITECH — cherche alternance en cybersécurité (Jan 2026 - Juil 2029). Rigoureux, curieux, dynamique.",
+      'Langues': "Français (langue maternelle) · Anglais (B2) · Espagnol (B1).",
+      'Formation': "EPITECH (M0 actuellement), parcours ingénieur informatique.",
+      'Expériences': "Service de recherche en biotechnologies (juil 2025) — Manufacturing d'orgues (fév 2020).",
+      'Compétences': "Python, Java, VHDL, Assembleur, HTML/CSS, Excel, PowerPoint, Word, Cybersécurité (RootMe).",
+      'Projets': "Site web jeux de stratégie, jeu d'aventure Java, robot labyrinthe (assembleur), FencerStats.",
+      'Centres d\'intérêt': "Musique (orgue, tuba, solfège), jeux de société, jeux de rôle.",
+      'Contact': "florian.billon@epitech.eu · 06 38 41 50 49 · 91 rue Garibaldi, 94100 Saint-Maur-des-Fossés"
+    };
+
+    const found = new Set();
+    const mappings = { 'QR fragment':'Contact', 'Partition':"Centres d'intérêt", 'Logo PJ':'Projets' };
+
+    const logEl = document.getElementById('log');
+    const invEl = document.getElementById('inventory');
+    const dropzone = document.getElementById('dropzone');
+    const reconstructList = document.getElementById('reconstructList');
+    const monitorText = document.getElementById('monitorText');
+
+    const SCORE_KEY = 'escape_best_scores_v1';
+    let horodatage_debut = null;
+
+    function log(txt){ logEl.innerHTML += '<div style="margin-top:6px">'+txt+'</div>'; logEl.scrollTop = logEl.scrollHeight; }
+
+    function nowMs(){ return Date.now(); }
+
+    function startTimerIfNeeded(){
+      if (!horodatage_debut) {
+        horodatage_debut = nowMs();
+        log('Chrono démarré.');
+      }
+    }
+
+    function formatDurationMs(ms){
+      const s = Math.round(ms/1000);
+      const min = Math.floor(s/60);
+      const sec = s % 60;
+      return (min>0 ? min + 'm ' : '') + sec + 's';
+    }
+
+    function loadScores(){
+      try { return JSON.parse(localStorage.getItem(SCORE_KEY) || '[]'); } catch(e){ return []; }
+    }
+
+    function saveScores(list){ localStorage.setItem(SCORE_KEY, JSON.stringify(list)); }
+
+    function addScoreEntry(name, durationMs){
+      const list = loadScores();
+      const entry = { id: 's_' + Date.now() + '_' + Math.floor(Math.random()*9999), name: name || 'Anonyme', timeMs: durationMs, ts: nowMs() };
+      list.push(entry);
+      list.sort((a,b)=> a.timeMs - b.timeMs);
+      saveScores(list);
+      return { list, entry };
+    }
+
+    function getRank(list, entryId){
+      return list.findIndex(e=>e.id===entryId) + 1;
+    }
+
+    function renderLeaderboard(container, list, highlightId){
+      if(!list || list.length===0){ container.innerHTML = '<div style="color:var(--muted)">Aucun score enregistré</div>'; return; }
+      let html = '<table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left">Rang</th><th style="text-align:left">Nom</th><th style="text-align:left">Temps</th></tr></thead><tbody>';
+      list.forEach((e, i)=>{
+        const best = e.id === highlightId ? 'background:#e6ffe6' : '';
+        html += `<tr style="${best}"><td>${i+1}</td><td>${escapeHtml(e.name)}</td><td>${formatDurationMs(e.timeMs)}</td></tr>`;
+      });
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+    function displayScore(durationMs, rank){
+      const el = document.getElementById('scoreDisplay');
+      el.innerHTML = `<strong>Temps</strong> : <span style="color:var(--accent)">${formatDurationMs(durationMs)}</span><br><strong>Rang</strong> : <span style="color:var(--accent)">${rank}</span>`;
+    }
+
+    document.getElementById('showLeaderboard').addEventListener('click', ()=>{
+      const container = document.getElementById('leaderboard');
+      const scores = loadScores();
+      container.style.display = container.style.display === 'none' ? 'block' : 'none';
+      renderLeaderboard(container, scores, null);
+    });
+
+    function createInvItem(name,img){
+      const el = document.createElement('div'); el.className='item'; el.draggable=true; el.dataset.name=name;
+      const im = document.createElement('img'); im.src=img; im.alt=name; el.appendChild(im);
+      el.addEventListener('dragstart', e=>{ e.dataTransfer.setData('text/plain', name); });
+      el.addEventListener('click', ()=>{ useItem(name); });
+      invEl.appendChild(el);
+      startTimerIfNeeded();
+    }
+
+    dropzone.addEventListener('dragover', e=>{ e.preventDefault(); dropzone.style.borderColor='var(--accent)'; });
+    dropzone.addEventListener('dragleave', ()=>{ dropzone.style.borderColor='#ccc'; });
+    dropzone.addEventListener('drop', e=>{ e.preventDefault(); const name = e.dataTransfer.getData('text/plain'); dropzone.style.borderColor='#ccc'; useItem(name); });
+
+    function useItem(name){
+      log('→ Tu utilises : '+name);
+      startTimerIfNeeded();
+      if(mappings[name]){ revealSection(mappings[name]); } else { log('Rien d\'utile pour le moment.'); }
+    }
+
+    function revealSection(key){
+      if(found.has(key)) return;
+      found.add(key);
+      log('Section découverte : '+key);
+      const card = document.createElement('div');
+      card.className='section-card reveal';
+      card.innerHTML='<strong>'+key+'</strong><div style="margin-top:6px;color:var(--muted);font-size:13px">'+sections[key]+'</div>';
+      reconstructList.prepend(card);
+
+      if (found.size === Object.keys(sections).length) {
+        log('✔ Toutes les sections sont reconstituées. Il faut maintenant entrer le code final !');
+        const final = prompt('Toutes les sections sont trouvées ! Entre le code final pour sortir :');
+        if (final && final.toUpperCase().trim() === 'CV') {
+          alert('Félicitations ! Tu as terminé l\'escape game. Code final = CV');
+          const fin = nowMs();
+          const debut = horodatage_debut || fin;
+          const durationMs = Math.max(0, fin - debut);
+
+          const playerName = prompt('Entrer un pseudo pour le classement (laisse vide pour Anonyme) :') || 'Anonyme';
+
+          const { list, entry } = addScoreEntry(playerName.trim(), durationMs);
+          const rank = getRank(list, entry.id);
+          displayScore(durationMs, rank);
+          const lb = document.getElementById('leaderboard');
+          if(lb.style.display !== 'none') renderLeaderboard(lb, list, entry.id);
+
+          setTimeout(function () {
+            window.location.href = 'https://drive.google.com/file/d/1BMnHJ2Ex2m9A47mtbAWkjeqP1J4MtU-4/view?usp=drive_open';
+          }, 50);
+        } else {
+          alert('Code incorrect, la porte reste verrouillée.');
+          log('❌ Code final incorrect. Essaie encore.');
+        }
+      }
+    }
+
+    function invHas(name){ return Array.from(invEl.children).some(c=>c.dataset.name===name); }
+
+      document.getElementById('p1').onclick=()=>{ 
+        if(!invHas('QR fragment')){
+          createInvItem('QR fragment','https://img.icons8.com/ios-filled/64/000000/qr-code.png'); 
+          log('Objet récupéré : QR fragment'); 
+        } 
+      };
+      document.getElementById('p2').onclick=()=>{ 
+      };
+      document.getElementById('p3').onclick=()=>{ 
+        if(!invHas('Logo PJ')){
+          createInvItem('Logo PJ','https://img.icons8.com/ios-filled/64/000000/project.png'); 
+          log('Objet récupéré : Logo PJ'); 
+        } 
+      };
+
+    document.getElementById('tryMonitor').onclick=()=>{
+      const pass=prompt('Mot de passe écran ? (indice : initiales des compétences)');
+      if(pass && pass.toUpperCase().includes('P') && pass.toUpperCase().includes('J')){
+        monitorText.textContent='Profil trouvé.';
+        revealSection('Profil');
+      } else{
+        log('Mot de passe incorrect.');
+      }
+    };
+
+    document.getElementById('openDrawer').onclick=()=>{
+      if(!invHas('Partition')){
+        createInvItem('Partition','https://img.icons8.com/ios-filled/64/000000/musical-notes.png');
+        log('Tu récupères la partition dans le tiroir.');
+        revealSection('Langues');
+    };
+  }
+
+    document.getElementById('openLocker').onclick=()=>{
+      const code=document.getElementById('lockerCode').value.trim();
+      if(code==='321'){
+        revealSection('Expériences');
+        log('Armoire ouverte, fiche Expérince trouvée.');
+      } else {
+        log('Code incorrect.');
+      }
+    };
+
+    setTimeout(()=>{
+      log('Un post-it sur l\'écran mentionne EPITECH → Formation.');
+      revealSection('Formation');
+    },3000);
+
+    setTimeout(()=>{
+      log('Un carnet montre des logos de langages et RootMe → Compétences.');
+      revealSection('Compétences');
+    },5200);
+
+    (function init(){
+      const scores = loadScores();
+      const lb = document.getElementById('leaderboard');
+      if(scores.length>0){
+        renderLeaderboard(lb, scores, null);
+      }
+      const sd = document.getElementById('scoreDisplay');
+      sd.textContent = 'Aucun score enregistré';
+    })();
+  </script>
+</body>
+</html>
